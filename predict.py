@@ -6,6 +6,7 @@
 import sys
 import tensorflow as tf
 import numpy as np
+import cv2
 from PIL import Image
 from object_detection import ObjectDetection
 
@@ -25,7 +26,8 @@ class TFObjectDetection(ObjectDetection):
             tf.import_graph_def(graph_def, input_map={"Placeholder:0": input_data}, name="")
 
     def predict(self, preprocessed_image):
-        inputs = np.array(preprocessed_image, dtype=np.float)[:, :, (2, 1, 0)]  # RGB -> BGR
+        # Commenting the following line out as opencv reads images in BGR format by default
+        # inputs = np.array(preprocessed_image, dtype=np.float)[:, :, (2, 1, 0)]  # RGB -> BGR
 
         with tf.Session(graph=self.graph) as sess:
             output_tensor = sess.graph.get_tensor_by_name('model_outputs:0')
@@ -45,9 +47,14 @@ def main(image_filename):
 
     od_model = TFObjectDetection(graph_def, labels)
 
-    image = Image.open(image_filename)
-    predictions = od_model.predict_image(image)
-    print(predictions)
+    # Use cv2.VideoCapture(0) if capturing live video from camera
+    cap = cv2.VideoCapture("test.mp4")
+    while(True):
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+        predictions = od_model.predict_image(frame)
+        print(predictions)
+    cap.release()
 
 
 if __name__ == '__main__':
